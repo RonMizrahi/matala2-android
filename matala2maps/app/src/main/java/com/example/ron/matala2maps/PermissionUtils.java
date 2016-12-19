@@ -1,8 +1,5 @@
 package com.example.ron.matala2maps;
 
-/**
- * Created by Ofir on 12/16/2016.
- */
 
 import android.app.Dialog;
 import android.content.DialogInterface;
