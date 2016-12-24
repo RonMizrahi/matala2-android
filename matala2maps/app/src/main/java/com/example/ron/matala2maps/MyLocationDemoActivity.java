@@ -2,24 +2,36 @@ package com.example.ron.matala2maps;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
-
+import com.example.ron.matala2maps.MainActivity;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 /**
- * Created by Ofir on 12/16/2016.
+ * Created by Ron on 12/16/2016.
  */
 
-public class MyLocationDemoActivity extends AppCompatActivity
+public class MyLocationDemoActivity extends MainActivity
         implements
         GoogleMap.OnMyLocationButtonClickListener, OnMapReadyCallback, ActivityCompat.OnRequestPermissionsResultCallback {
+
+    DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+    DatabaseReference mUserRef = mRootRef.child("User");
+    User user = null;
+
 
     /**
      * Request code for location permission request.
@@ -44,6 +56,7 @@ public class MyLocationDemoActivity extends AppCompatActivity
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
     }
 
     @Override
@@ -71,10 +84,18 @@ public class MyLocationDemoActivity extends AppCompatActivity
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "Location saved on database", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
-        
+        Location loc = mMap.getMyLocation();
+        user = currentUser;
+        if(loc==null)
+            Toast.makeText(this, "No GPS Connectivity", Toast.LENGTH_SHORT).show();
+        double latitude = loc.getLatitude();
+        double longitude = loc.getLongitude();
+        UserLocation ul = new UserLocation(latitude,longitude);
+        user.setLocation(ul);
+        mUserRef.child(userKey).setValue(user);
+        Toast.makeText(this, "lat:"+latitude+", long:"+longitude, Toast.LENGTH_SHORT).show();
         return false;
     }
 
