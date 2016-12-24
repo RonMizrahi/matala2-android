@@ -108,7 +108,20 @@ public class MainActivity extends AppCompatActivity{
             }
             else
             {
-                Toast.makeText(this,result.getContents(),Toast.LENGTH_LONG).show();
+                try {
+                    String qrMessage=result.getContents();
+                    String[] split=qrMessage.split(",");
+                    double latitude = Double.parseDouble(split[0]);
+                    double longitude = Double.parseDouble(split[1]);
+                    UserLocation ul = new UserLocation(latitude, longitude);
+                    currentUser.setLocation(ul);
+                    mUserRef.child(userKey).setValue(currentUser);
+                    Toast.makeText(this, result.getContents(), Toast.LENGTH_LONG).show();
+                }
+                catch(Exception e)
+                {
+                    Toast.makeText(this, "Bad QR scan", Toast.LENGTH_LONG).show();
+                }
             }
         }
         else
