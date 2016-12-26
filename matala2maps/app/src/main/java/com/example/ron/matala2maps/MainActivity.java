@@ -1,5 +1,6 @@
 package com.example.ron.matala2maps;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +19,7 @@ import com.google.zxing.integration.android.IntentResult;
 import android.provider.Settings.Secure;
 
 public class MainActivity extends AppCompatActivity{
-    Button btn_gps,btn_qr;
+    Button btn_gps,btn_qr,btn_ble;
     final Activity activity=this;
     DatabaseReference mRootRef;
     DatabaseReference mUserRef;
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity{
         mUserRef = mRootRef.child("User");
         btn_gps=(Button) findViewById(R.id.btn_gps);
         btn_qr =(Button) findViewById(R.id.btn_qr);
+        btn_ble =(Button) findViewById(R.id.btn_ble);
+
         currentAndroidID=Secure.getString(getContentResolver(), Secure.ANDROID_ID);
         init();
     }
@@ -95,6 +98,16 @@ public class MainActivity extends AppCompatActivity{
                 integrator.initiateScan();
             }
         });
+
+        btn_ble.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                Intent anythingintent=new Intent(MainActivity.this,DeviceList.class);
+                startActivity(anythingintent);
+            }
+        });
     }
 
     @Override
@@ -117,6 +130,13 @@ public class MainActivity extends AppCompatActivity{
                     currentUser.setLocation(ul);
                     mUserRef.child(userKey).setValue(currentUser);
                     Toast.makeText(this, result.getContents(), Toast.LENGTH_LONG).show();
+                    Thread.sleep(3000);
+                    Intent anythingintent=new Intent(MainActivity.this,MyLocationDemoActivity.class);
+                    Bundle b=new Bundle();
+                    b.putDouble("latitude",latitude);
+                    b.putDouble("longitude",longitude);
+                    anythingintent.putExtras(b);
+                    startActivity(anythingintent);
                 }
                 catch(Exception e)
                 {
