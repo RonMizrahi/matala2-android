@@ -11,16 +11,6 @@
     tools:context="com.example.ron.matala2maps.MainActivity">
 
 
-    <Button
-        android:text="track other location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_track"
-        android:layout_marginBottom="25dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true" />
-
     <TextView
         android:text="Own tracking"
         android:layout_width="wrap_content"

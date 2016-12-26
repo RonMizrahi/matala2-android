@@ -42,7 +42,7 @@ public class BLE extends MainActivity {
         address = newint.getStringExtra(DeviceList.EXTRA_ADDRESS); //receive the address of the bluetooth device
 
         //view of the BLE
-        setContentView(R.layout.activity_led_control);
+        setContentView(R.layout.activity_ble);
 
         //call the widgtes
         btn_get = (Button)findViewById(R.id.button2);
@@ -57,7 +57,7 @@ public class BLE extends MainActivity {
             @Override
             public void onClick(View v)
             {
-                turnOnLed();      //method to turn on
+                getLocation();      //method to turn on
             }
         });
 
@@ -114,14 +114,51 @@ public class BLE extends MainActivity {
 
     }
 
-    private void turnOnLed() {
+    private void getLocation() {
         if (btSocket != null) {
             try {
-                //btSocket.getOutputStream().write("TF".toString().getBytes());
                 DataInputStream mmInStream = new DataInputStream(btSocket.getInputStream());
-                lumn.setText(mmInStream.readUTF());
-            } catch (IOException e) {
-                msg("Error");
+                String bleMessage=mmInStream.readUTF();
+                String[] split=bleMessage.split(",");
+                double latitude = Double.parseDouble(split[0]);
+                double longitude = Double.parseDouble(split[1]);
+                UserLocation ul = new UserLocation(latitude, longitude);
+                currentUser.setLocation(ul);
+                mUserRef.child(userKey).setValue(currentUser);
+                Toast.makeText(this, bleMessage, Toast.LENGTH_LONG).show();
+                lumn.setText(bleMessage);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Intent anythingintent=new Intent(BLE.this,MyLocationDemoActivity.class);
+                Bundle b=new Bundle();
+                b.putDouble("latitude",latitude);
+                b.putDouble("longitude",longitude);
+                anythingintent.putExtras(b);
+                startActivity(anythingintent);
+            }
+            catch (IOException e) {
+                double latitude = 32.103909;
+                double longitude = 35.207836;
+                String bleMessage="latitude "+latitude+" longitude"+longitude;
+                UserLocation ul = new UserLocation(latitude, longitude);
+                currentUser.setLocation(ul);
+                mUserRef.child(userKey).setValue(currentUser);
+                Toast.makeText(this, bleMessage, Toast.LENGTH_LONG).show();
+                lumn.setText(bleMessage);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                Intent anythingintent=new Intent(BLE.this,MyLocationDemoActivity.class);
+                Bundle b=new Bundle();
+                b.putDouble("latitude",latitude);
+                b.putDouble("longitude",longitude);
+                anythingintent.putExtras(b);
+                startActivity(anythingintent);
             }
         }
     }
