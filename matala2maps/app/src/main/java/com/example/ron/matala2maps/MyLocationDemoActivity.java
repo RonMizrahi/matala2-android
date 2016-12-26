@@ -80,7 +80,7 @@ public class MyLocationDemoActivity extends MainActivity
                 user.setLocation(ul);
                 user.setSpeed(location.getSpeed());
                 mUserRef.child(userKey).setValue(user);
-                Toast.makeText(getApplicationContext(), "lat:"+latitude+", long:"+longitude, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(), "lat:"+latitude+", long:"+longitude, Toast.LENGTH_SHORT).show();
             }
 
             @Override
