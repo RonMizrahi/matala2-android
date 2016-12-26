@@ -8,6 +8,7 @@ public class User {
     private boolean isAdmin;
     private String androidID;
     private UserLocation location=null;
+    private float speed;
 
     public User()
     {}
@@ -39,6 +40,14 @@ public class User {
 
     public void setLocation(UserLocation location) {
         this.location = location;
+    }
+
+    public float getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(float speed) {
+        this.speed = speed;
     }
 }
 
