@@ -148,16 +148,22 @@ public class MyLocationDemoActivity extends MainActivity
     public boolean onMyLocationButtonClick() {
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
-        Location loc = mMap.getMyLocation();
-        user = currentUser;
-        if(loc==null)
+        try {
+            Location loc = mMap.getMyLocation();
+            user = currentUser;
+            if (loc == null)
+                Toast.makeText(this, "No GPS Connectivity", Toast.LENGTH_SHORT).show();
+            double latitude = loc.getLatitude();
+            double longitude = loc.getLongitude();
+            UserLocation ul = new UserLocation(latitude, longitude);
+            user.setLocation(ul);
+            mUserRef.child(userKey).setValue(user);
+            Toast.makeText(this, "lat:" + latitude + ", long:" + longitude, Toast.LENGTH_SHORT).show();
+        }
+        catch (Exception e)
+        {
             Toast.makeText(this, "No GPS Connectivity", Toast.LENGTH_SHORT).show();
-        double latitude = loc.getLatitude();
-        double longitude = loc.getLongitude();
-        UserLocation ul = new UserLocation(latitude,longitude);
-        user.setLocation(ul);
-        mUserRef.child(userKey).setValue(user);
-        Toast.makeText(this, "lat:"+latitude+", long:"+longitude, Toast.LENGTH_SHORT).show();
+        }
         return false;
     }
 
