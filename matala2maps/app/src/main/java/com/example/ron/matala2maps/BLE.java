@@ -15,6 +15,13 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.os.AsyncTask;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.UUID;
@@ -23,7 +30,6 @@ import java.util.UUID;
 public class BLE extends MainActivity {
 
     Button btn_get, btnDis;
-    SeekBar brightness;
     TextView lumn;
     String address = null;
     private ProgressDialog progress;
@@ -32,6 +38,8 @@ public class BLE extends MainActivity {
     private boolean isBtConnected = false;
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+    DatabaseReference mBLE = mRootRef.child("BLE");
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -47,7 +55,6 @@ public class BLE extends MainActivity {
         //call the widgtes
         btn_get = (Button)findViewById(R.id.button2);
         btnDis = (Button)findViewById(R.id.button4);
-
 
         new ConnectBT().execute(); //Call the class to connect
 
@@ -69,34 +76,6 @@ public class BLE extends MainActivity {
                 Disconnect(); //close connection
             }
         });
-
-        brightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser==true)
-                {
-                    lumn.setText(String.valueOf(progress));
-                    try
-                    {
-                        btSocket.getOutputStream().write(String.valueOf(progress).getBytes());
-                    }
-                    catch (IOException e)
-                    {
-
-                    }
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
     }
 
     private void Disconnect()
@@ -116,8 +95,9 @@ public class BLE extends MainActivity {
 
     private void getLocation() {
         if (btSocket != null) {
-            try {
-                DataInputStream mmInStream = new DataInputStream(btSocket.getInputStream());
+            try {   //BLE Device that gives cordinates in inputstream
+                btSocket.connect();//start connection
+                DataInputStream mmInStream = new DataInputStream(btSocket.getInputStream());        //get input
                 String bleMessage=mmInStream.readUTF();
                 String[] split=bleMessage.split(",");
                 double latitude = Double.parseDouble(split[0]);
@@ -139,26 +119,8 @@ public class BLE extends MainActivity {
                 anythingintent.putExtras(b);
                 startActivity(anythingintent);
             }
-            catch (IOException e) {
-                double latitude = 32.103909;
-                double longitude = 35.207836;
-                String bleMessage="latitude "+latitude+" longitude"+longitude;
-                UserLocation ul = new UserLocation(latitude, longitude);
-                currentUser.setLocation(ul);
-                mUserRef.child(userKey).setValue(currentUser);
-                Toast.makeText(this, bleMessage, Toast.LENGTH_LONG).show();
-                lumn.setText(bleMessage);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-                Intent anythingintent=new Intent(BLE.this,MyLocationDemoActivity.class);
-                Bundle b=new Bundle();
-                b.putDouble("latitude",latitude);
-                b.putDouble("longitude",longitude);
-                anythingintent.putExtras(b);
-                startActivity(anythingintent);
+            catch (Exception e) {
+                    connectBleDevice();         //if can not get BLE input stream location, get from database the location
             }
         }
     }
@@ -212,7 +174,7 @@ public class BLE extends MainActivity {
                     BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
                     btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
                     BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-                    btSocket.connect();//start connection
+
                 }
             }
             catch (IOException e)
@@ -238,5 +200,47 @@ public class BLE extends MainActivity {
             }
             progress.dismiss();
         }
+    }
+
+    //version 2
+    private void connectBleDevice()
+    {
+        mBLE.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean foundDevice=false;
+                //check if blutooth device exists in database
+                    for (DataSnapshot ble : dataSnapshot.getChildren()) {
+                        BleDevice b = ble.getValue(BleDevice.class);
+                        if (b.getDeviceMac().equals(address)) {
+                            foundDevice=true;
+                            double latitude = b.getLoc().getLatitude();
+                            double longitude = b.getLoc().getLongitude();
+                            Intent anythingintent=new Intent(BLE.this,MyLocationDemoActivity.class);
+                            Bundle bun=new Bundle();
+                            bun.putDouble("latitude",latitude);
+                            bun.putDouble("longitude",longitude);
+                            anythingintent.putExtras(bun);
+                            startActivity(anythingintent);
+                        }
+                    }
+                    if (foundDevice==false) {
+                        //no exists, create default object
+                        BleDevice ble=new BleDevice(address,new UserLocation(32.103909,35.207836));
+                        mBLE.push().setValue(ble);
+                        Intent anythingintent=new Intent(BLE.this,MyLocationDemoActivity.class);
+                        Bundle bun=new Bundle();
+                        bun.putDouble("latitude",32.103909);
+                        bun.putDouble("longitude",35.207836);
+                        anythingintent.putExtras(bun);
+                        startActivity(anythingintent);
+                    }
+                }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 }
