@@ -18,14 +18,17 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import android.provider.Settings.Secure;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity{
-    Button btn_gps,btn_qr,btn_ble;
+    Button btn_gps,btn_qr,btn_ble,btn_trackall;
     final Activity activity=this;
     DatabaseReference mRootRef;
     DatabaseReference mUserRef;
     public User currentUser = null;
     public String userKey=null;
     String currentAndroidID=null;
+    ArrayList<UserLocation> AllUsersLocations=new ArrayList<UserLocation>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +40,8 @@ public class MainActivity extends AppCompatActivity{
         btn_gps=(Button) findViewById(R.id.btn_gps);
         btn_qr =(Button) findViewById(R.id.btn_qr);
         btn_ble =(Button) findViewById(R.id.btn_ble);
-
-        currentAndroidID=Secure.getString(getContentResolver(), Secure.ANDROID_ID);
+        btn_trackall=(Button) findViewById(R.id.btn_trackall);
+        currentAndroidID=Secure.getString(getContentResolver(), Secure.ANDROID_ID);     //get unique android device id
         init();
     }
 
@@ -48,17 +51,19 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 //loop twice to make sure u get the object key
+                //get user from database
                 for(int i=0;i<2;i++)
                 {
                     for (DataSnapshot user : dataSnapshot.getChildren()) {
                         User u = user.getValue(User.class);
+                        AllUsersLocations.add(u.getLocation());
                         if (u.getAndroidID().equals(currentAndroidID)) {
                             currentUser = u;
                             userKey = user.getKey();
-                            break;  //user was found
+                            //break;  //user was found
                         }
                     }
-                    if (currentUser == null) {
+                    if (currentUser == null) {  //create new user
                         currentUser = new User(currentAndroidID, false);
                         mUserRef.push().setValue(currentUser);
                         //loop to find the key after adding
@@ -108,10 +113,23 @@ public class MainActivity extends AppCompatActivity{
                 startActivity(anythingintent);
             }
         });
+        btn_trackall.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                Intent anythingintent=new Intent(MainActivity.this,MyLocationDemoActivity.class);
+                Bundle b=new Bundle();
+                b.putBoolean("trackall",true);
+                anythingintent.putExtras(b);
+                startActivity(anythingintent);
+            }
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //QR function!!!!!!!
         IntentResult result= IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
         if(result!=null)
         {
@@ -122,6 +140,7 @@ public class MainActivity extends AppCompatActivity{
             else
             {
                 try {
+                    //GET QR scan and parse it , Example: (x,y) ===== (30.30,40.40)
                     String qrMessage=result.getContents();
                     String[] split=qrMessage.split(",");
                     double latitude = Double.parseDouble(split[0]);
@@ -133,6 +152,7 @@ public class MainActivity extends AppCompatActivity{
                     Thread.sleep(3000);
                     Intent anythingintent=new Intent(MainActivity.this,MyLocationDemoActivity.class);
                     Bundle b=new Bundle();
+                    b.putBoolean("trackall",false);
                     b.putDouble("latitude",latitude);
                     b.putDouble("longitude",longitude);
                     anythingintent.putExtras(b);

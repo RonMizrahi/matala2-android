@@ -28,6 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 import android.app.ProgressDialog;
 import android.location.Location;
 import android.location.LocationManager;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
  * Created by Ron on 12/16/2016.
@@ -119,14 +120,24 @@ public class MyLocationDemoActivity extends MainActivity
         enableMyLocation();
         Bundle b = getIntent().getExtras();
         if(b != null) {
-            lat = b.getDouble("latitude");
-            lon=b.getDouble("longitude");
-            CameraUpdate center= CameraUpdateFactory.newLatLng(new LatLng(lat, lon));
-            CameraUpdate zoom=CameraUpdateFactory.zoomTo(15);
-            mMap.moveCamera(center);
-            mMap.animateCamera(zoom);
+            if(b.getBoolean("trackall")==true) {        //we want to track all users
+                for (int i = 0; i < AllUsersLocations.size(); i++) {
+                    double lati = AllUsersLocations.get(i).getLatitude();
+                    double longi = AllUsersLocations.get(i).getLongitude();
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(lati, longi)).title(lati + "," + longi));
+                }
+            }
+            else {
+                // get only own location
+                lat = b.getDouble("latitude");
+                lon = b.getDouble("longitude");
+                CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(lat, lon));
+                CameraUpdate zoom = CameraUpdateFactory.zoomTo(15);
+                mMap.moveCamera(center);
+                mMap.animateCamera(zoom);
+                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(lat + "," + lon));
+            }
         }
-
     }
 
     /**

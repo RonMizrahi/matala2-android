@@ -16,6 +16,7 @@ public class User {
     public User(String androidID, boolean isAdmin) {
         this.androidID = androidID;
         this.isAdmin = isAdmin;
+        location=new UserLocation(0,0);
     }
 
     public boolean isAdmin() {
